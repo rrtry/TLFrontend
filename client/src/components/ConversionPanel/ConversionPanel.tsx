@@ -28,7 +28,6 @@ export const ConversionPanel = ({
           <div className={styles.separator}></div>
           <div className={styles.currency}>{toCurrency}</div>
         </div>
-
       </div>
     </div>
   );
