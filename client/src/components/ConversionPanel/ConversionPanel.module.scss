@@ -1,0 +1,50 @@
+.panel {
+  background: #f9f9f9;
+  border-radius: 12px;
+  margin-block-end: 2rem;
+  padding: 1rem;
+}
+
+.grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  grid-template-columns: 1fr 1fr;
+  margin-block-end: 1rem;
+}
+
+.cell {
+  align-items: center;
+  background: transparent;
+  border: 1px solid #3838388e;
+  border-radius: 8px;
+  display: grid;
+  font-weight: 600;
+  grid-template-columns: 80px 20px 1fr;
+  padding: 0.5rem;
+}
+
+.amount {
+  overflow-x: auto;
+  text-align: start;
+  white-space: nowrap;
+}
+
+.separator {
+  background-color: #3838388e;
+  block-size: 1.5em;
+  inline-size: 1px;
+  justify-self: center;
+}
+
+.currency {
+  padding-inline-start: 8px;
+  text-align: start;
+}
+
+.trend {
+  color: #2c7a4d;
+  font-size: 1rem;
+  font-weight: 500;
+  text-align: center;
+}
