@@ -17,8 +17,9 @@ export const ExchangeRate = ({
 }: ExchangeRateProps) => {
   return (
     <div className={styles.rateCard}>
+      <div>{fromAmount} {fromCurrency} is</div>
       <div className={styles.rateValue}>
-        {fromAmount} {fromCurrency} is <strong>{toAmount}</strong> {toCurrency}
+        <strong>{toAmount}</strong> {toCurrency}
       </div>
       <div className={styles.date}>{date}</div>
     </div>

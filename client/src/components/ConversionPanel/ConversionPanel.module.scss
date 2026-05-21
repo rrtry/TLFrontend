@@ -13,6 +13,21 @@
   margin-block-end: 1rem;
 }
 
+.customSelect {
+  min-inline-size: 350px;
+}
+
+.customSelect select {
+  background: none;
+  background-color: transparent;
+  border: 0 solid transparent;
+  cursor: pointer;
+  font-size: 1.15rem;
+  inline-size: 100%;
+  outline: none;
+  padding: 0.675em 6em 0.675em 1em;
+}
+
 .cell {
   align-items: center;
   background: transparent;
@@ -25,6 +40,8 @@
 }
 
 .amount {
+  border: 0;
+  font-size: 1.15rem;
   overflow-x: auto;
   text-align: start;
   white-space: nowrap;
@@ -40,11 +57,4 @@
 .currency {
   padding-inline-start: 8px;
   text-align: start;
-}
-
-.trend {
-  color: #2c7a4d;
-  font-size: 1rem;
-  font-weight: 500;
-  text-align: center;
 }

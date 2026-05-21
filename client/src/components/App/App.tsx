@@ -9,7 +9,7 @@ function App() {
   const { from, to, rate, date } = exchangeRate;
 
   const fromCurrency = currencies[from];
-  const fromAmount = 1;
+  const fromAmount  = 1;
   const toCurrency = currencies[to];
   const toAmount = rate;
 
@@ -18,10 +18,10 @@ function App() {
       <main className={styles.container}>
   
         <ExchangeRate
-          fromCurrency={from}
+          fromCurrency={fromCurrency.name}
           toAmount={rate}
           fromAmount={fromAmount}
-          toCurrency={to}
+          toCurrency={toCurrency.name}
           date={date}
         />
 

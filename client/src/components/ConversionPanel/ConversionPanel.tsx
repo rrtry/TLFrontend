@@ -1,4 +1,5 @@
 import styles from './ConversionPanel.module.scss';
+import { currencies } from '../../data/currencyData';
 
 interface ConversionPanelProps {
   fromCurrency: string;
@@ -6,6 +7,53 @@ interface ConversionPanelProps {
   fromAmount: number;
   toAmount: number;
 }
+
+interface CurrencySelectorProps {
+  selectedCurrency: string;
+}
+
+interface ConversionRowProps {
+  amount: number;
+  currency: string;
+  editable: boolean;
+}
+
+const CurrencySelector = ({
+    selectedCurrency
+}: CurrencySelectorProps) => {
+  return (
+    <div className={styles.customSelect}>
+      <select value={selectedCurrency}>
+        {
+          Object.values(currencies).map(currency => (
+            <option key={currency.code} value={currency.code}>
+              {currency.code} - {currency.name}
+            </option>
+          ))
+        }
+      </select>
+    </div>
+  );
+};
+
+const ConversionRow = ({
+    amount, 
+    currency,
+    editable
+}: ConversionRowProps) => {
+  return (
+    <div className={styles.cell}>
+      <input
+          type="number"
+          className={styles.amount}
+          value={amount}
+          onChange={(e) => editable ? e : e }
+        />
+      <div className={styles.separator}></div>
+      <CurrencySelector selectedCurrency={currency}></CurrencySelector>
+    </div>
+  );
+};
 
 export const ConversionPanel = ({
     fromCurrency,
@@ -17,17 +65,18 @@ export const ConversionPanel = ({
     <div className={styles.panel}>
       <div className={styles.grid}>
 
-        <div className={styles.cell}>
-          <div className={styles.amount}>{fromAmount}</div>
-          <div className={styles.separator}></div>
-          <div className={styles.currency}>{fromCurrency}</div>
-        </div>
+        <ConversionRow 
+          currency={fromCurrency}
+          amount={fromAmount}
+          editable={true}
+        />
 
-        <div className={styles.cell}>
-          <div className={styles.amount}>{toAmount}</div>
-          <div className={styles.separator}></div>
-          <div className={styles.currency}>{toCurrency}</div>
-        </div>
+        <ConversionRow 
+          currency={toCurrency}
+          amount={toAmount}
+          editable={false}
+        />
+
       </div>
     </div>
   );
