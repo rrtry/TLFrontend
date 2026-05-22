@@ -1,73 +1,100 @@
-# React + TypeScript + Vite
+```markdown
+# Конвертер валют (React + TypeScript)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Проект представляет собой одностраничное приложение для конвертации валют, работающее на локальных мок-данных. Реализована полная бизнес-логика: выбор валюты «Отдаёте» и «Получаете», ввод суммы, пересчёт результата, кнопка Swap, а также блок с подробным описанием валют, состояние которого сбрасывается при смене пары.
 
-Currently, two official plugins are available:
+## Запуск проекта
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install      # установка зависимостей
+npm run dev      # запуск в режиме разработки (http://localhost:5173)
+npm run test     # запуск тестов
+npm run build    # сборка для production
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Тесты
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+Покрытые сценарии:
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+- Рендер селектов и полей - проверяется наличие селектов, поля ввода суммы, поля результата и кнопки Swap с помощью `data-testid`.
+- Пересчёт при изменении суммы - при вводе новой суммы результат обновляется согласно текущему курсу.
+- Пересчёт при изменении пары - при смене одной из валют результат пересчитывается по новому курсу.
+- Запрет одинаковых валют - если пользователь выбирает в селекте «Отдаёте» ту же валюту, что и в «Получаете», вторая автоматически меняется на первую доступную отличную валюту.
+- Сброс состояния блока MoreAbout по `key` - при смене пары внутреннее состояние открытости/закрытости описаний обнуляется.
+
+## Мок-данные
+### Расположение
+
 ```
+src/mocks/
+  currencies.ts   # экспорт списка валют
+  priceChanges.ts # экспорт курсов
+  2_hw_mock_currencies.json
+  2_hw_mock_price_changes.json
+```
+
+### Подключение
+
+Мок-данные импортируются в хуке `useConverter` и в компонентах, которым нужны списки валют или курсы:
+```ts
+import { currencies } from '../mocks/currencies';
+import { priceChanges } from '../mocks/priceChanges';
+```
+
+### Структура
+
+**`Currency`** (тип, описанный в `src/models/Currency.ts`):
+
+```ts
+{
+  code: string;        // "USD"
+  name: string;        // "US Dollar"
+  description: string; // текстовое описание
+  symbol: string;      // "$"
+}
+```
+
+**`PriceChange`** (тип в `src/models/PriceChange.ts`):
+
+```ts
+{
+  purchasedCurrencyCode: string;   // код покупаемой валюты (to)
+  paymentCurrencyCode: string;     // код валюты платежа (from)
+  price: number;                   // курс
+  dateTime: string;                // ISO 8601
+}
+```
+
+**Курсы** хранятся в объекте `Record<fromCurrency, Record<toCurrency, PriceChange>>`. Пример:
+
+```ts
+const priceChanges = {
+  "CAD": { "PLN": { price: 2.95, ... }, "AUD": { ... } },
+  "PLN": { "CAD": { price: 0.34, ... }, ... }
+};
+```
+
+## Сброс состояния по `key` (Reset by key)
+### Где используется
+
+В компоненте `Main` при отрисовке `<MoreAbout />` передаётся уникальный проп `key`:
+
+```tsx
+<MoreAbout
+  key={moreAboutKey}   // moreAboutKey = `${from}-${to}`
+  fromCurrency={fromCurrency}
+  toCurrency={toCurrency}
+/>
+```
+
+### Зачем это нужно
+
+Компонент `MoreAbout` хранит внутреннее состояние - открыто/закрыто описание каждой валюты (с помощью `useState`). При смене валютной пары (например, с CAD/PLN на AUD/JPY) необходимо, чтобы оба описания снова были свёрнуты. Простое изменение пропсов не приводит к сбросу внутреннего состояния - React переиспользует тот же экземпляр компонента и сохраняет старые значения `useState`.
+
+Использование `key` заставляет React полностью пересоздавать компонент, когда `key` меняется. Старый экземпляр удаляется, новый монтируется с начальным состоянием (`fromOpen = false`, `toOpen = false`).
+
+```ts
+const moreAboutKey = `${from}-${to}`; // уникален для каждой пары
+```
+
+При каждой смене `from` или `to` создаётся новый ключ, и React монтирует свежий `MoreAbout`.
