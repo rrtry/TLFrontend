@@ -4,10 +4,9 @@ import { MoreAbout } from '../MoreAbout/MoreAbout.tsx';
 import { exchangeRate, currencies } from '../../data/currencyData';
 import styles from './App.module.scss';
 
-function App() {
+export const App = () => {
 
   const { from, to, rate, date } = exchangeRate;
-
   const fromCurrency = currencies[from];
   const fromAmount  = 1;
   const toCurrency = currencies[to];
@@ -37,5 +36,3 @@ function App() {
     </div>
   );
 }
-
-export default App;

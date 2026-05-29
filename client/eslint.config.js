@@ -1,5 +1,7 @@
 import js from '@eslint/js';
 import eslintConfigPrettier from 'eslint-config-prettier/flat';
+import importPlugin from 'eslint-plugin-import';
+import react from 'eslint-plugin-react';
 import reactHooks from 'eslint-plugin-react-hooks';
 import reactRefresh from 'eslint-plugin-react-refresh';
 import { defineConfig, globalIgnores } from 'eslint/config';
@@ -22,6 +24,15 @@ export default defineConfig([
     languageOptions: {
       globals: globals.browser
     },
+    plugins: {
+      import: importPlugin,
+      react
+    },
+    settings: {
+      react: {
+        version: 'detect'
+      }
+    },
     rules: {
       eqeqeq: ['error', 'always'],
       curly: ['error', 'all'],
@@ -29,6 +40,13 @@ export default defineConfig([
       'no-debugger': 'error',
       'no-alert': 'warn',
       'no-unused-vars': 'off',
+      'react/function-component-definition': [
+        'error',
+        {
+          namedComponents: 'arrow-function',
+          unnamedComponents: 'arrow-function'
+        }
+      ],
       '@typescript-eslint/no-magic-numbers': [
         'warn',
         {
@@ -47,7 +65,8 @@ export default defineConfig([
           varsIgnorePattern: '^_',
           caughtErrorsIgnorePattern: '^_'
         }
-      ]
+      ],
+      'import/no-default-export': 'error',
     }
   },
   eslintConfigPrettier
