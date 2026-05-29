@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { useConverter } from '../../hooks/useConverter';
 import { currencies } from '../../mocks/currencies';
 import { priceChanges } from '../../mocks/priceChanges';
@@ -7,24 +8,30 @@ import { MoreAbout } from '../../components/MoreAbout/MoreAbout';
 import styles from './Main.module.scss';
 
 export const Main = () => {
-
   const {
-    from, to, amount, result,
-    setFrom, setTo, setAmount, swap, getRate,
+    from, to, amount, result, rate,
+    setFrom, setTo, setAmount, swap,
   } = useConverter();
 
-  const fromCurrency = currencies.find(c => c.code === from)!;
-  const toCurrency = currencies.find(c => c.code === to)!;
-  const rate = getRate();
-  const dateTime = priceChanges[from]?.[to]?.dateTime
-    ? new Date(priceChanges[from][to].dateTime).toUTCString()
-    : 'Date is not specified';
+  const fromCurrency = useMemo(
+    () => currencies.find(c => c.code === from)!,
+    [from]
+  );
+
+  const toCurrency = useMemo(
+    () => currencies.find(c => c.code === to)!,
+    [to]
+  );
+
+  const dateTime = useMemo(() => {
+    const dt = priceChanges[from]?.[to]?.dateTime;
+    return dt ? new Date(dt).toUTCString() : 'Date is not specified';
+  }, [from, to]);
 
   const moreAboutKey = `${from}-${to}`;
 
   return (
     <div className={styles.main}>
-
       <ExchangeRate
         fromAmount={1}
         fromCurrency={from}

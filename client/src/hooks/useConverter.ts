@@ -1,50 +1,108 @@
-import { useState, useEffect, useCallback } from 'react';
-import { currencies } from '../mocks/currencies';
+import { useReducer, useMemo, useCallback } from 'react';
 import { priceChanges } from '../mocks/priceChanges';
 
-export const useConverter = () => {
+interface ConverterState {
+  from: string;
+  to: string;
+  amount: number;
+}
 
-    const currencyCodes = currencies.map(c => c.code);
-    const [from, setFrom] = useState<string>(currencyCodes[0]);
-    const [to, setTo] = useState<string>(currencyCodes[1]);
+type Action =
+  | { type: 'SET_FROM'; code: string }
+  | { type: 'SET_TO'; code: string }
+  | { type: 'SET_AMOUNT'; value: number }
+  | { type: 'SWAP' };
 
-    const [amount, setAmount] = useState<number>(1);
-    const [result, setResult] = useState<number>(0);
-
-    // Запрет одинаковых валют: если from === to, автоматически меняем to
-    useEffect(() => {
-        if (from === to) {
-            const newTo = currencyCodes.find(code => code !== from) || currencyCodes[0];
-            setTo(newTo);
-        }
-    }, [from, to, currencyCodes]);
-    
-    const getRate = useCallback((): number => {
-        if (!priceChanges[from]?.[to]) {
-            return 0;
-        }
-        return priceChanges[from][to].price;
-    }, [from, to]);
-
-    useEffect(() => {
-        const rate = getRate();
-        setResult(amount * rate);
-    }, [amount, getRate]);
-
-    const swap = useCallback(() => {
-        setFrom(to);
-        setTo(from);
-    }, [from, to]);
-
-    return {
-        from,
-        to,
-        amount,
-        result,
-        setFrom,
-        setTo,
-        setAmount,
-        swap,
-        getRate,
-    };
+const initialState: ConverterState = {
+  from: 'CAD',
+  to: 'PLN',
+  amount: 1,
 };
+
+function reducer(state: ConverterState, action: Action): ConverterState {
+  switch (action.type) {
+    case 'SET_FROM':
+      if (action.code === state.to) {
+        return {
+          ...state,
+          from: action.code,
+          to: state.from,
+        };
+      }
+      return { ...state, from: action.code };
+
+    case 'SET_TO':
+      if (action.code === state.from) {
+        return {
+          ...state,
+          to: action.code,
+          from: state.to,
+        };
+      }
+      return { ...state, to: action.code };
+
+    case 'SET_AMOUNT':
+      return { ...state, amount: action.value };
+
+    case 'SWAP':
+      return {
+        ...state,
+        from: state.to,
+        to: state.from,
+      };
+
+    default:
+      return state;
+  }
+}
+
+export function useConverter() {
+  const [state, dispatch] = useReducer(reducer, initialState);
+
+  const setFrom = useCallback((code: string) => {
+    console.log('setFrom: ' + code);
+    dispatch({ type: 'SET_FROM', code });
+  }, []);
+
+  const setTo = useCallback((code: string) => {
+    console.log('setTo: ' + code);
+    dispatch({ type: 'SET_TO', code });
+  }, []);
+
+  const setAmount = useCallback((value: number) => {
+    console.log('setAmount: ' + value);
+    dispatch({ type: 'SET_AMOUNT', value });
+  }, []);
+
+  const swap = useCallback(() => {
+    console.log('swap: ');
+    dispatch({ type: 'SWAP' });
+  }, []);
+
+  // Вычисляем курс и результат при изменении state
+  const rate = useMemo(() => {
+    const fromPrices = priceChanges[state.from];
+    if (!fromPrices || !fromPrices[state.to]) {
+      return 0;
+    }
+    console.log('rate: ' + fromPrices[state.to].price);
+    return fromPrices[state.to].price;
+  }, [state.from, state.to]);
+
+  const result = useMemo(() => {
+    console.log('result: ' + (state.amount * rate).toFixed(4));
+    return Number((state.amount * rate).toFixed(4));
+  }, [state.amount, rate]);
+
+  return {
+    from: state.from,
+    to: state.to,
+    amount: state.amount,
+    result,
+    setFrom,
+    setTo,
+    setAmount,
+    swap,
+    rate,
+  };
+}
