@@ -1,6 +1,6 @@
 import styles from './ExchangeRate.module.scss';
 
-interface ExchangeRateProps {
+type ExchangeRateProps = {
   fromAmount: number;
   fromCurrency: string;
   toAmount: number;

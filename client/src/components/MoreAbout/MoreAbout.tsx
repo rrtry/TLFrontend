@@ -1,28 +1,11 @@
 import type { Currency } from '../../data/currencyData';
+import { MoreAboutCurrency } from './MoreAboutCurrency'
 import styles from './MoreAbout.module.scss';
 
-interface MoreAboutCurrencyProps {
-  code: string;
-  name: string;
-  symbol: string;
-  description: string;
-}
-
-interface MoreAboutProps {
+type MoreAboutProps = {
   fromCurrency: Currency;
   toCurrency: Currency;
 }
-
-const MoreAboutCurrency = ({ code, name, symbol, description }: MoreAboutCurrencyProps) => {
-  return (
-    <div className={styles.currencyInfo}>
-      <h3 className={styles.title}>
-        {name} - {code} - {symbol}
-      </h3>
-      <p className={styles.description}>{description}</p>
-    </div>
-  );
-};
 
 export const MoreAbout = ({ fromCurrency, toCurrency }: MoreAboutProps) => {
   return (
