@@ -1,11 +1,11 @@
-.moreAboutCurrency {
+.more-about-currency {
   margin: 1rem 0;
   padding: 1rem;
   background: #fefefe;
   border-radius: 8px;
 }
 
-.separatorGrid {
+.separator-grid {
   display: grid;
   grid-template-columns: 1fr auto 1fr;
   gap: 1rem;
@@ -14,12 +14,12 @@
   margin: 2rem 0;
 }
 
-.separatorLine {
+.separator-line {
   block-size: 1px;
   background: #ccc;
 }
 
-.separatorContent {
+.separator-content {
   align-content: center;
 
   inline-size: 200px;
@@ -37,7 +37,7 @@
   font-size: 1.2rem;
 }
 
-.currenciesWrapper {
+.currencies-wrapper {
   display: flex;
   flex-direction: column;
   gap: 1rem;
