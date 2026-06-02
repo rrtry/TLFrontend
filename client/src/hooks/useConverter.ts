@@ -71,7 +71,9 @@ export function useConverter() {
 
   const setAmount = useCallback((value: number) => {
     console.log('setAmount: ' + value);
-    dispatch({ type: 'SET_AMOUNT', value });
+    if (value > 0) {
+      dispatch({ type: 'SET_AMOUNT', value });
+    }
   }, []);
 
   const swap = useCallback(() => {

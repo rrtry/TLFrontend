@@ -2,7 +2,7 @@ import { useState } from 'react';
 import type { Currency } from '../../models/Currency';
 import styles from './MoreAbout.module.scss';
 
-interface MoreAboutProps {
+type MoreAboutProps = {
   fromCurrency: Currency;
   toCurrency: Currency;
 }
@@ -33,6 +33,7 @@ const MoreAboutCurrency = ({ currency, isOpen, onToggle }: {
 };
 
 export const MoreAbout = ({ fromCurrency, toCurrency }: MoreAboutProps) => {
+  
   const [fromOpen, setFromOpen] = useState(false);
   const [toOpen, setToOpen] = useState(false);
 
