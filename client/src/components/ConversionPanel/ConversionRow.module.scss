@@ -1,40 +1,48 @@
 .cell {
+  display: grid;
+  grid-template-columns: 80px 20px 1fr;
   align-items: center;
+
+  padding: 0.5rem;
+
   background: transparent;
   border: 1px solid #3838388e;
   border-radius: 8px;
-  display: grid;
+
   font-weight: 600;
-  grid-template-columns: 80px 20px 1fr;
-  padding: 0.5rem;
 }
 
 .amount {
-  border: 0;
-  font-size: 1.15rem;
   overflow-x: auto;
+
+  border: 0;
+
+  font-size: 1.15rem;
   text-align: start;
   white-space: nowrap;
 }
 
 .separator {
-  background-color: #3838388e;
-  block-size: 1.5em;
-  inline-size: 1px;
   justify-self: center;
+  inline-size: 1px;
+  block-size: 1.5em;
+  background-color: #3838388e;
 }
 
-.customSelect {
+.custom-select {
   min-inline-size: 350px;
 }
 
-.customSelect select {
+.custom-select select {
+  inline-size: 100%;
+  padding: 0.675em 6em 0.675em 1em;
+
   background: none;
   background-color: transparent;
   border: 0 solid transparent;
-  cursor: pointer;
-  font-size: 1.15rem;
-  inline-size: 100%;
   outline: none;
-  padding: 0.675em 6em 0.675em 1em;
+
+  font-size: 1.15rem;
+
+  cursor: pointer;
 }

@@ -4,18 +4,18 @@ import { ConversionRow } from './ConversionRow.tsx';
 type ConversionPanelProps = {
   from: string;
   to: string;
-  amount: number;
+  amountInput: string;
   result: number;
   onFromChange: (code: string) => void;
   onToChange: (code: string) => void;
-  onAmountChange: (value: number) => void;
+  onAmountChange: (value: string) => void;
   onSwap: () => void;
 }
 
 export const ConversionPanel = ({
   from,
   to,
-  amount,
+  amountInput,
   result,
   onFromChange,
   onToChange,
@@ -27,7 +27,7 @@ export const ConversionPanel = ({
       <div className={styles.grid}>
 
         <ConversionRow
-          amount={amount}
+          amountInput={amountInput}
           currency={from}
           editable={true}
           onAmountChange={onAmountChange}
@@ -37,13 +37,12 @@ export const ConversionPanel = ({
         <button 
           className={styles.swapButton} 
           onClick={onSwap}
-          data-testid={"swap-button"}
-          >
+          data-testid={"swap-button"}>
           Swap
         </button>
 
         <ConversionRow
-          amount={result}
+          amountInput={String(result)}
           currency={to}
           editable={false}
           onCurrencyChange={onToChange}

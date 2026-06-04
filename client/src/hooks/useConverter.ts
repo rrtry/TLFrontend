@@ -4,19 +4,19 @@ import { priceChanges } from '../mocks/priceChanges';
 interface ConverterState {
   from: string;
   to: string;
-  amount: number;
+  amountInput: string;
 }
 
 type Action =
   | { type: 'SET_FROM'; code: string }
   | { type: 'SET_TO'; code: string }
-  | { type: 'SET_AMOUNT'; value: number }
+  | { type: 'SET_AMOUNT'; value: string }
   | { type: 'SWAP' };
 
 const initialState: ConverterState = {
   from: 'CAD',
   to: 'PLN',
-  amount: 1,
+  amountInput: '1',
 };
 
 function reducer(state: ConverterState, action: Action): ConverterState {
@@ -42,7 +42,7 @@ function reducer(state: ConverterState, action: Action): ConverterState {
       return { ...state, to: action.code };
 
     case 'SET_AMOUNT':
-      return { ...state, amount: action.value };
+      return { ...state, amountInput: action.value };
 
     case 'SWAP':
       return {
@@ -67,17 +67,14 @@ export function useConverter() {
     dispatch({ type: 'SET_TO', code });
   }, []);
 
-  const setAmount = useCallback((value: number) => {
-    if (value > 0) {
-      dispatch({ type: 'SET_AMOUNT', value });
-    }
+  const setAmount = useCallback((value: string) => {
+    dispatch({ type: 'SET_AMOUNT', value });
   }, []);
 
   const swap = useCallback(() => {
     dispatch({ type: 'SWAP' });
   }, []);
 
-  // Вычисляем курс и результат при изменении state
   const rate = useMemo(() => {
     const fromPrices = priceChanges[state.from];
     if (!fromPrices || !fromPrices[state.to]) {
@@ -87,13 +84,19 @@ export function useConverter() {
   }, [state.from, state.to]);
 
   const result = useMemo(() => {
-    return Number((state.amount * rate).toFixed(4));
-  }, [state.amount, rate]);
+
+    const parsed = parseFloat(state.amountInput);
+    const numAmount = isNaN(parsed) ? 0 : Math.max(0.0, parsed);
+    const fractionDigits = 4;
+    
+    return Number((numAmount * rate).toFixed(fractionDigits));
+
+  }, [state.amountInput, rate]);
 
   return {
     from: state.from,
     to: state.to,
-    amount: state.amount,
+    amountInput: state.amountInput,
     result,
     setFrom,
     setTo,

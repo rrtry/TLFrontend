@@ -9,14 +9,14 @@ import styles from './Main.module.scss';
 export const Main = () => {
 
   const {
-    from, to, amount, result, rate,
+    from, to, amountInput, result, rate,
     setFrom, setTo, setAmount, swap,
   } = useConverter();
 
   const fromCurrency = currencies.find(c => c.code === from)!;
   const toCurrency = currencies.find(c => c.code === to)!;
 
-  const dt = priceChanges[from]?.[to]?.dateTime!;
+  const dt = priceChanges[from]?.[to]?.dateTime;
   const dateTime = dt ? new Date(dt).toUTCString() : 'Date is not specified';
   const moreAboutKey = `${from}-${to}`;
 
@@ -34,7 +34,7 @@ export const Main = () => {
       <ConversionPanel
         from={from}
         to={to}
-        amount={amount}
+        amountInput={amountInput}
         result={result}
         onFromChange={setFrom}
         onToChange={setTo}
@@ -47,6 +47,7 @@ export const Main = () => {
         fromCurrency={fromCurrency}
         toCurrency={toCurrency}
       />
+      
     </div>
   );
 };

@@ -1,51 +1,28 @@
-import { useEffect } from 'react';
-import { useState } from 'react';
 import styles from './ConversionRow.module.scss';
 import { currencies } from '../../mocks/currencies';
 
 type ConversionRowProps = {
-  amount: number;
+  amountInput: string;
   currency: string;
   editable: boolean;
-  onAmountChange?: (value: number) => void;
+  onAmountChange?: (value: string) => void;
   onCurrencyChange: (code: string) => void;
 }
 
 export const ConversionRow = ({
-  amount,
+  amountInput,
   currency,
   editable,
   onAmountChange,
   onCurrencyChange,
 }: ConversionRowProps) => {
-
-  const [inputValue, setInputValue] = useState<string>(String(amount));
-  useEffect(() => {
-    setInputValue(String(amount));
-  }, [amount]);
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-
-    const rawValue = e.target.value;
-    setInputValue(rawValue);
-
-    if (!editable) {
-      return;
-    }
-
-    const numericValue = parseFloat(rawValue);
-    const valueToSet = isNaN(numericValue) ? 0 : numericValue;
-
-    onAmountChange?.(valueToSet);
-  };
-
   return (
     <div className={styles.cell}>
       <input
         type="number"
         className={styles.amount}
-        value={inputValue}
-        onChange={handleInputChange}
+        value={amountInput}
+        onChange={(e) => editable && onAmountChange?.(e.target.value)}
         readOnly={!editable}
         disabled={!editable}
         data-testid={editable ? "amount-input" : "result-input"}

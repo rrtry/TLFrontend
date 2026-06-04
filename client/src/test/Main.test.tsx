@@ -30,7 +30,8 @@ describe('Конвертер', () => {
     
     const resultInput = screen.getByTestId('result-input');
     // CAD -> PLN курс 2.95, 10 * 2.95 = 29.5
-    expect(resultInput).toHaveValue(29.5);
+    const expected = 29.5;
+    expect(resultInput).toHaveValue(expected);
   });
 
   it('пересчитывает результат при изменении пары валют', () => {
@@ -40,7 +41,8 @@ describe('Конвертер', () => {
     
     const resultInput = screen.getByTestId('result-input');
     // AUD -> PLN курс 2.66, сумма 1
-    expect(resultInput).toHaveValue(2.66);
+    const expected = 2.66;
+    expect(resultInput).toHaveValue(expected);
   });
 
   it('запрещает одинаковые валюты в паре', () => {

@@ -1,15 +1,16 @@
 .panel {
-  background: #f9f9f9;
-  border-radius: 12px;
   margin-block-end: 2rem;
   padding: 1rem;
+  background: #f9f9f9;
+  border-radius: 12px;
 }
 
 .grid {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
   grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+
   margin-block-end: 1rem;
 }
 
@@ -18,17 +19,21 @@
   text-align: start;
 }
 
-.swapButton { 
-  background: #0077ff;
+.swap-button {
+  inline-size: fit-content;
+  margin: 0.5rem auto;
+  padding: 0.5rem 1rem; 
+
+  background: #07f;
   border: none;
   border-radius: 20px;
+
   color: white;
-  cursor: pointer;
   font-size: 1rem;
-  margin: 0.5rem auto;
-  padding: 0.5rem 1rem;
+
   transition: background 0.2s;
-  width: fit-content;
+
+  cursor: pointer;
 
   &:hover {
     background: #005fcc;
