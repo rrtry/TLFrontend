@@ -60,24 +60,20 @@ export function useConverter() {
   const [state, dispatch] = useReducer(reducer, initialState);
 
   const setFrom = useCallback((code: string) => {
-    console.log('setFrom: ' + code);
     dispatch({ type: 'SET_FROM', code });
   }, []);
 
   const setTo = useCallback((code: string) => {
-    console.log('setTo: ' + code);
     dispatch({ type: 'SET_TO', code });
   }, []);
 
   const setAmount = useCallback((value: number) => {
-    console.log('setAmount: ' + value);
     if (value > 0) {
       dispatch({ type: 'SET_AMOUNT', value });
     }
   }, []);
 
   const swap = useCallback(() => {
-    console.log('swap: ');
     dispatch({ type: 'SWAP' });
   }, []);
 
@@ -87,12 +83,10 @@ export function useConverter() {
     if (!fromPrices || !fromPrices[state.to]) {
       return 0;
     }
-    console.log('rate: ' + fromPrices[state.to].price);
     return fromPrices[state.to].price;
   }, [state.from, state.to]);
 
   const result = useMemo(() => {
-    console.log('result: ' + (state.amount * rate).toFixed(4));
     return Number((state.amount * rate).toFixed(4));
   }, [state.amount, rate]);
 
