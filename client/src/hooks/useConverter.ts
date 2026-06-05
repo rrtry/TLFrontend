@@ -1,4 +1,4 @@
-import { useReducer, useMemo, useCallback } from 'react';
+import { useReducer, useMemo } from 'react';
 import { priceChanges } from '../mocks/priceChanges';
 
 interface ConverterState {
@@ -57,29 +57,32 @@ function reducer(state: ConverterState, action: Action): ConverterState {
 }
 
 export function useConverter() {
+  
   const [state, dispatch] = useReducer(reducer, initialState);
 
-  const setFrom = useCallback((code: string) => {
+  const setFrom = (code: string) => {
     dispatch({ type: 'SET_FROM', code });
-  }, []);
+  };
 
-  const setTo = useCallback((code: string) => {
+  const setTo = (code: string) => {
     dispatch({ type: 'SET_TO', code });
-  }, []);
+  };
 
-  const setAmount = useCallback((value: string) => {
+  const setAmount = (value: string) => {
     dispatch({ type: 'SET_AMOUNT', value });
-  }, []);
+  };
 
-  const swap = useCallback(() => {
+  const swap = () => {
     dispatch({ type: 'SWAP' });
-  }, []);
+  };
 
   const rate = useMemo(() => {
     const fromPrices = priceChanges[state.from];
+    
     if (!fromPrices || !fromPrices[state.to]) {
       return 0;
     }
+
     return fromPrices[state.to].price;
   }, [state.from, state.to]);
 
