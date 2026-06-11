@@ -1,20 +1,18 @@
 import styles from './ConversionRow.module.scss';
-import { currencies } from '../../mocks/currencies';
+import type { Currency } from '../../models/Currency';
 
 type ConversionRowProps = {
   amountInput: string;
   currency: string;
   editable: boolean;
+  currencies: Currency[];
   onAmountChange?: (value: string) => void;
   onCurrencyChange: (code: string) => void;
 }
 
 export const ConversionRow = ({
-  amountInput,
-  currency,
-  editable,
-  onAmountChange,
-  onCurrencyChange,
+  amountInput, currency, editable, currencies,
+  onAmountChange, onCurrencyChange,
 }: ConversionRowProps) => {
   return (
     <div className={styles.cell}>
@@ -29,13 +27,14 @@ export const ConversionRow = ({
       />
       <div className={styles.separator}></div>
       <div className={styles.customSelect}>
-        <select 
-          value={currency} 
+        <select
+          value={currency}
           onChange={(e) => onCurrencyChange(e.target.value)}
-          data-testid={editable ? 'from-select' : 'to-select'}>
-          {currencies.map(currency => (
-            <option key={currency.code} value={currency.code}>
-              {currency.code}
+          data-testid={editable ? 'from-select' : 'to-select'}
+        >
+          {currencies.map(c => (
+            <option key={c.code} value={c.code}>
+              {c.code}
             </option>
           ))}
         </select>

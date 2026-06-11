@@ -1,28 +1,43 @@
 import { useConverter } from '../../hooks/useConverter';
-import { currencies } from '../../mocks/currencies';
-import { priceChanges } from '../../mocks/priceChanges';
 import { ExchangeRate } from '../../components/ExchangeRate/ExchangeRate';
 import { ConversionPanel } from '../../components/ConversionPanel/ConversionPanel';
 import { MoreAbout } from '../../components/MoreAbout/MoreAbout';
 import styles from './Main.module.scss';
 
 export const Main = () => {
-
+  
   const {
     from, to, amountInput, result, rate,
     setFrom, setTo, setAmount, swap,
+    currencies, priceChanges, loading, error,
   } = useConverter();
 
-  const fromCurrency = currencies.find(c => c.code === from)!;
-  const toCurrency = currencies.find(c => c.code === to)!;
+  const fromCurrency = currencies.find(c => c.code === from);
+  const toCurrency = currencies.find(c => c.code === to);
+  const rateEntry = priceChanges.find(pc => pc.purchasedCurrencyCode === from && pc.paymentCurrencyCode === to);
+  const dateTime = rateEntry ? new Date(rateEntry.dateTime).toUTCString() : 'Date is not specified';
 
-  const dt = priceChanges[from]?.[to]?.dateTime;
-  const dateTime = dt ? new Date(dt).toUTCString() : 'Date is not specified';
+  if (loading) {
+    return <div className={styles.main}>Loading data...</div>;
+  }
+
+  if (error) {
+    return (
+      <div className={styles.main}>
+        Server error: {error}
+      </div>
+    );
+  }
+
+  if (!fromCurrency || !toCurrency) {
+    return <div className={styles.main}>Currency data unavailable.</div>;
+  }
+
   const moreAboutKey = `${from}-${to}`;
 
   return (
     <div className={styles.main}>
-      
+
       <ExchangeRate
         fromAmount={1}
         fromCurrency={from}
@@ -36,6 +51,7 @@ export const Main = () => {
         to={to}
         amountInput={amountInput}
         result={result}
+        currencies={currencies}
         onFromChange={setFrom}
         onToChange={setTo}
         onAmountChange={setAmount}
@@ -47,7 +63,6 @@ export const Main = () => {
         fromCurrency={fromCurrency}
         toCurrency={toCurrency}
       />
-      
     </div>
   );
 };
