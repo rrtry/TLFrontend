@@ -4,9 +4,10 @@ import type { PriceChange } from '../models/PriceChange';
 export interface DataState {
   currencies: Currency[];
   priceChanges: PriceChange[];
-  loading: boolean;      // загрузка списка валют
-  rateLoading: boolean;  // загрузка курса для текущей пары
+  loading: boolean;
+  rateLoading: boolean;
   error: string | null;
+  rateError: string | null;
 }
 
 export type DataAction =
@@ -23,10 +24,12 @@ export const initialDataState: DataState = {
   loading: false,
   rateLoading: false,
   error: null,
+  rateError: null,
 };
 
 export function dataReducer(state: DataState, action: DataAction): DataState {
   switch (action.type) {
+    
     case 'FETCH_START':
       return { ...state, loading: true, error: null };
 
@@ -43,18 +46,18 @@ export function dataReducer(state: DataState, action: DataAction): DataState {
       return { ...state, loading: false, error: action.payload };
 
     case 'FETCH_RATE_START':
-      return { ...state, rateLoading: true, error: null };
+      return { ...state, rateLoading: true, rateError: null };
 
     case 'FETCH_RATE_SUCCESS':
       return {
         ...state,
         priceChanges: action.payload.priceChanges,
         rateLoading: false,
-        error: null,
+        rateError: null,
       };
 
     case 'FETCH_RATE_ERROR':
-      return { ...state, rateLoading: false, error: action.payload };
+      return { ...state, rateLoading: false, rateError: action.payload };
 
     default:
       return state;

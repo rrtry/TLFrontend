@@ -32,22 +32,26 @@ function converterReducer(state: ConverterState, action: ConverterAction): Conve
         return { ...state, from: action.code, to: state.from };
       }
       return { ...state, from: action.code };
+
     case 'SET_TO':
       if (action.code === state.from) {
         return { ...state, to: action.code, from: state.to };
       }
       return { ...state, to: action.code };
+
     case 'SET_AMOUNT':
       return { ...state, amountInput: action.value };
+
     case 'SWAP':
       return { ...state, from: state.to, to: state.from };
+      
     default:
       return state;
   }
 }
 
 export function useConverter() {
-  
+
   const [converterState, converterDispatch] = useReducer(converterReducer, initialConverterState);
   const [dataState, dataDispatch] = useReducer(dataReducer, initialDataState);
 
@@ -57,7 +61,6 @@ export function useConverter() {
     const loadCurrencies = async () => {
       dataDispatch({ type: 'FETCH_START' });
       try {
-
         const currenciesDto = await fetchCurrencies();
         if (cancelled) {
           return;
@@ -68,6 +71,7 @@ export function useConverter() {
           type: 'FETCH_SUCCESS',
           payload: { currencies, priceChanges: [] },
         });
+
       } catch (err) {
         if (!cancelled) {
           dataDispatch({
@@ -81,16 +85,18 @@ export function useConverter() {
     return () => { cancelled = true; };
   }, []);
 
-  // Загрузка курса для текущей пары валют
+  // Загрузка курса для текущей пары
   useEffect(() => {
+
     if (dataState.currencies.length === 0) {
-      return;
+      return; // ждём загрузки валют
     }
-    
+
     let cancelled = false;
     const loadRate = async () => {
       dataDispatch({ type: 'FETCH_RATE_START' });
       try {
+
         const history = await fetchPriceChanges(converterState.from, converterState.to);
         if (cancelled) {
           return;
@@ -125,7 +131,6 @@ export function useConverter() {
   const setAmount = (value: string) => converterDispatch({ type: 'SET_AMOUNT', value });
   const swap = () => converterDispatch({ type: 'SWAP' });
 
-  // Курс из единственного элемента priceChanges
   const rate = useMemo(() => {
     if (dataState.priceChanges.length === 0) return 0;
     return dataState.priceChanges[0].price;
@@ -147,11 +152,12 @@ export function useConverter() {
     setTo,
     setAmount,
     swap,
-    // данные для UI
+    // UI
     currencies: dataState.currencies,
     priceChanges: dataState.priceChanges,
     loading: dataState.loading,
     rateLoading: dataState.rateLoading,
-    error: dataState.error,
+    error: dataState.error,         // ошибка загрузки валют
+    rateError: dataState.rateError, // ошибка загрузки курса
   };
 }
