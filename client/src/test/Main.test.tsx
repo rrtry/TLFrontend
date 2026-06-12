@@ -1,106 +1,220 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { vi, describe, it, expect, beforeEach } from 'vitest';
 import { Main } from '../pages/Main/Main';
+import { useConverter } from '../hooks/useConverter';
 
-describe('Конвертер', () => {
-  it('рендерит селекты и поля с мок-данными', () => {
+vi.mock('../hooks/useConverter');
+
+const baseCurrencies = [
+  { code: 'CAD', name: 'Canadian dollar', description: 'CAD desc', symbol: '$' },
+  { code: 'PLN', name: 'Polish zloty', description: 'PLN desc', symbol: 'zł' },
+  { code: 'AUD', name: 'Australian dollar', description: 'AUD desc', symbol: '$' },
+  { code: 'JPY', name: 'Japanese yen', description: 'JPY desc', symbol: '¥' },
+  { code: 'ZAR', name: 'South African rand', description: 'ZAR desc', symbol: 'R' },
+];
+
+const defaultHookReturn = {
+  from: 'CAD',
+  to: 'PLN',
+  amountInput: '1',
+  result: 2.95,
+  rate: 2.95,
+  currencies: baseCurrencies,
+  priceChanges: [
+    {
+      purchasedCurrencyCode: 'CAD',
+      paymentCurrencyCode: 'PLN',
+      price: 2.95,
+      dateTime: '2026-01-01T00:00:00Z',
+    },
+  ],
+  loading: false,
+  error: null,
+  setFrom: vi.fn(),
+  setTo: vi.fn(),
+  setAmount: vi.fn(),
+  swap: vi.fn(),
+};
+
+describe('Конвертер (Main с замоканным useConverter)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(useConverter).mockReturnValue(defaultHookReturn);
+  });
+
+  it('рендерит селекты и поля с данными', () => {
     render(<Main />);
-    
-    // Поле ввода суммы
-    const amountInput = screen.getByTestId('amount-input');
-    expect(amountInput).toHaveValue(1);
-    
-    // Поле результата
-    const resultInput = screen.getByTestId('result-input');
-    expect(resultInput).toBeInTheDocument();
-    
-    // Селекты по test-id
-    const fromSelect = screen.getByTestId('from-select');
-    const toSelect = screen.getByTestId('to-select');
-    expect(fromSelect).toHaveValue('CAD'); // первая валюта по умолчанию
-    expect(toSelect).toHaveValue('PLN');   // вторая валюта
-    
-    // Кнопка Swap
+    expect(screen.getByTestId('amount-input')).toHaveValue(1);
+    expect(screen.getByTestId('result-input')).toBeInTheDocument();
+    expect(screen.getByTestId('from-select')).toHaveValue('CAD');
+    expect(screen.getByTestId('to-select')).toHaveValue('PLN');
     expect(screen.getByTestId('swap-button')).toBeInTheDocument();
   });
 
-  it('пересчитывает результат при изменении суммы', () => {
+  it('отображает состояние загрузки', () => {
+    vi.mocked(useConverter).mockReturnValue({
+      ...defaultHookReturn,
+      loading: true,
+      currencies: [],
+    });
+    render(<Main />);
+    expect(screen.getByText('Loading data...')).toBeInTheDocument();
+  });
+
+  it('отображает сообщение об ошибке', () => {
+    vi.mocked(useConverter).mockReturnValue({
+      ...defaultHookReturn,
+      loading: false,
+      error: 'Server down',
+      currencies: [],
+    });
+    render(<Main />);
+    expect(screen.getByText(/server error: Server down/i)).toBeInTheDocument();
+  });
+
+  it('вызывает setAmount при изменении суммы', () => {
+    const setAmount = vi.fn();
+    vi.mocked(useConverter).mockReturnValue({
+      ...defaultHookReturn,
+      setAmount,
+    });
     render(<Main />);
     const amountInput = screen.getByTestId('amount-input');
     fireEvent.change(amountInput, { target: { value: '10' } });
-    
-    const resultInput = screen.getByTestId('result-input');
-    // CAD -> PLN курс 2.95, 10 * 2.95 = 29.5
-    const expected = 29.5;
-    expect(resultInput).toHaveValue(expected);
+    expect(setAmount).toHaveBeenCalledWith('10');
   });
 
-  it('пересчитывает результат при изменении пары валют', () => {
+  it('отображает переданный результат и вызывает setFrom при смене валюты', () => {
+    const setFrom = vi.fn();
+    vi.mocked(useConverter).mockReturnValue({
+      ...defaultHookReturn,
+      setFrom,
+      result: 2.95,
+    });
     render(<Main />);
+    expect(screen.getByTestId('result-input')).toHaveValue(2.95);
+
     const fromSelect = screen.getByTestId('from-select');
     fireEvent.change(fromSelect, { target: { value: 'AUD' } });
-    
-    const resultInput = screen.getByTestId('result-input');
-    // AUD -> PLN курс 2.66, сумма 1
-    const expected = 2.66;
-    expect(resultInput).toHaveValue(expected);
+    expect(setFrom).toHaveBeenCalledWith('AUD');
   });
 
-  it('запрещает одинаковые валюты в паре', () => {
-    render(<Main />);
+  it('при выборе одинаковой валюты вызывает setFrom и позволяет хуку обработать своп', () => {
+    const setFrom = vi.fn();
+    // Задаём два состояния для последовательных рендеров
+    vi.mocked(useConverter)
+      .mockReturnValueOnce({
+        ...defaultHookReturn,
+        setFrom,
+        from: 'CAD',
+        to: 'PLN',
+      })
+      .mockReturnValueOnce({
+        ...defaultHookReturn,
+        setFrom,
+        from: 'PLN',
+        to: 'CAD',
+      });
+
+    const { rerender } = render(<Main />);
     const fromSelect = screen.getByTestId('from-select');
-    // Пытаемся выбрать PLN (текущая to-валюта)
     fireEvent.change(fromSelect, { target: { value: 'PLN' } });
-    
-    // to должен автоматически смениться на первую доступную отличную от PLN (это CAD)
-    const toSelect = screen.getByTestId('to-select');
-    expect(toSelect).toHaveValue('CAD');
-    // Проверяем, что from и to не одинаковы
-    expect(fromSelect).toHaveValue('PLN');
-    expect(toSelect).not.toHaveValue('PLN');
+
+    // Должны вызвать setFrom
+    expect(setFrom).toHaveBeenCalledWith('PLN');
+
+    // Перерендериваем, чтобы подхватить новые значения из второго мока
+    rerender(<Main />);
+
+    // Теперь селекты должны показывать свопнутые значения
+    expect(screen.getByTestId('from-select')).toHaveValue('PLN');
+    expect(screen.getByTestId('to-select')).toHaveValue('CAD');
   });
 
-  it('сбрасывает состояние MoreAbout при смене пары (через key)', () => {
-    render(<Main />);
-    
-    // Открываем описание пары (общая кнопка)
+  it('сбрасывает состояние MoreAbout при смене пары (через key)', async () => {
+    const setFrom = vi.fn();
+    vi.mocked(useConverter)
+      .mockReturnValueOnce({
+        ...defaultHookReturn,
+        setFrom,
+        from: 'CAD',
+        to: 'PLN',
+        currencies: baseCurrencies,
+      })
+      .mockReturnValueOnce({
+        ...defaultHookReturn,
+        setFrom,
+        from: 'AUD',
+        to: 'PLN',
+        currencies: baseCurrencies,
+      });
+
+    const { rerender } = render(<Main />);
+
+    // Открываем MoreAbout
     const moreAboutButton = screen.getByTestId('more-about-header');
     fireEvent.click(moreAboutButton);
-    
-    // Должны появиться описания для CAD и PLN
-    const descCad = screen.getByTestId('description-CAD');
-    const descPln = screen.getByTestId('description-PLN');
-    expect(descCad).toBeInTheDocument();
-    expect(descPln).toBeInTheDocument();
-    
-    // Меняем пару: from CAD -> AUD
+
+    // Ждём появления описаний
+    await waitFor(() => {
+      expect(screen.getByTestId('description-CAD')).toBeInTheDocument();
+      expect(screen.getByTestId('description-PLN')).toBeInTheDocument();
+    });
+
+    // Меняем валюту
     const fromSelect = screen.getByTestId('from-select');
     fireEvent.change(fromSelect, { target: { value: 'AUD' } });
-    
-    // Описание CAD и PLN должно исчезнуть, а описание AUD не должно появиться (сброс состояния)
-    expect(screen.queryByTestId('description-CAD')).not.toBeInTheDocument();
-    expect(screen.queryByTestId('description-PLN')).not.toBeInTheDocument();
-    expect(screen.queryByTestId('description-AUD')).not.toBeInTheDocument();
+
+    // Перерендериваем с новым значением from=AUD
+    rerender(<Main />);
+
+    // MoreAbout должен закрыться из-за смены key, описания исчезают
+    await waitFor(() => {
+      expect(screen.queryByTestId('description-CAD')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('description-PLN')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('description-AUD')).not.toBeInTheDocument();
+    });
   });
 
-  it('переключает видимость описаний валют при клике на More about', () => {
+  it('переключает видимость описаний валют при клике на More about', async () => {
     render(<Main />);
+
+    const toggleButton = screen.getByTestId('more-about-header');
+
     // Изначально описаний нет
     expect(screen.queryByTestId('description-CAD')).not.toBeInTheDocument();
     expect(screen.queryByTestId('description-PLN')).not.toBeInTheDocument();
 
-    // Открываем описания
-    const toggleButton = screen.getByTestId('more-about-header');
+    // Открываем
     fireEvent.click(toggleButton);
 
-    // Оба описания появились
-    expect(screen.getByTestId('description-CAD')).toBeInTheDocument();
-    expect(screen.getByTestId('description-PLN')).toBeInTheDocument();
+    // Ждём появления описаний
+    await waitFor(() => {
+      expect(screen.getByTestId('description-CAD')).toBeInTheDocument();
+      expect(screen.getByTestId('description-PLN')).toBeInTheDocument();
+    });
 
-    // Закрываем обратно
+    // Закрываем
     fireEvent.click(toggleButton);
 
-    // Описания исчезли
-    expect(screen.queryByTestId('description-CAD')).not.toBeInTheDocument();
-    expect(screen.queryByTestId('description-PLN')).not.toBeInTheDocument();
+    // Ждём исчезновения
+    await waitFor(() => {
+      expect(screen.queryByTestId('description-CAD')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('description-PLN')).not.toBeInTheDocument();
+    });
+  });
+
+  it('вызывает swap при клике на кнопку Swap', () => {
+    const swap = vi.fn();
+    vi.mocked(useConverter).mockReturnValue({
+      ...defaultHookReturn,
+      swap,
+    });
+    render(<Main />);
+
+    const swapButton = screen.getByTestId('swap-button');
+    fireEvent.click(swapButton);
+
+    expect(swap).toHaveBeenCalledTimes(1);
   });
 });

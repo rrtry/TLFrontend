@@ -7,7 +7,7 @@ type ConversionPanelProps = {
   to: string;
   amountInput: string;
   result: number;
-  currencies: Currency[];   // теперь передаётся извне
+  currencies: Currency[];
   onFromChange: (code: string) => void;
   onToChange: (code: string) => void;
   onAmountChange: (value: string) => void;

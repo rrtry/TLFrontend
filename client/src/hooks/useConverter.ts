@@ -47,54 +47,26 @@ function converterReducer(state: ConverterState, action: ConverterAction): Conve
 }
 
 export function useConverter() {
+  
   const [converterState, converterDispatch] = useReducer(converterReducer, initialConverterState);
   const [dataState, dataDispatch] = useReducer(dataReducer, initialDataState);
 
-  // Загружаем все валюты и курсы при первом рендере
+  // 1. Загрузка списка валют
   useEffect(() => {
     let cancelled = false;
-    const loadAllData = async () => {
+
+    const loadCurrencies = async () => {
       dataDispatch({ type: 'FETCH_START' });
       try {
-
-        // Список валют
         const currenciesDto = await fetchCurrencies();
+        if (cancelled) return;
+
         const currencies: Currency[] = currenciesDto.map(mapCurrency);
-        
-        if (cancelled) {
-          return;
-        }
 
-        // Уникальные пары (кроме одинаковых кодов)
-        const codes = currencies.map(c => c.code);
-        const pairs: [string, string][] = [];
-        
-        for (const from of codes) {
-          for (const to of codes) {
-            if (from !== to) {
-              pairs.push([from, to]);
-            }
-          }
-        }
-
-        // Запрашиваем курсы для каждой пары, извлекаем последнюю запись
-        const pricePromises = pairs.map(([from, to]) => fetchPriceChanges(from, to));
-        const results = await Promise.allSettled(pricePromises);
-        const priceChanges: PriceChange[] = [];
-
-        results.forEach((res) => {
-          if (res.status === 'fulfilled' && res.value.length > 0) {
-            const last = res.value[res.value.length - 1];
-            priceChanges.push(mapPriceChange(last));
-          }
+        dataDispatch({
+          type: 'FETCH_SUCCESS',
+          payload: { currencies, priceChanges: [] }, // курсы пока пустые
         });
-
-        if (!cancelled) {
-          dataDispatch({
-            type: 'FETCH_SUCCESS',
-            payload: { currencies, priceChanges },
-          });
-        }
       } catch (err) {
         if (!cancelled) {
           dataDispatch({
@@ -105,32 +77,69 @@ export function useConverter() {
       }
     };
 
-    loadAllData();
-    
-    // cleanup
+    loadCurrencies();
+
     return () => {
       cancelled = true;
     };
-
   }, []);
+
+  // 2. Загрузка курса для выбранной пары валют
+  useEffect(() => {
+    // Ждём, пока загрузятся валюты, чтобы не делать запрос без кодов
+    if (dataState.currencies.length === 0) {
+      return;
+    }
+
+    let cancelled = false;
+    const loadRate = async () => {
+      dataDispatch({ type: 'FETCH_START' });
+      try {
+
+        const history = await fetchPriceChanges(converterState.from, converterState.to);
+        if (cancelled) {
+          return;
+        }
+
+        const priceChanges: PriceChange[] = [];
+        if (history.length > 0) {
+          const last = history[history.length - 1];
+          priceChanges.push(mapPriceChange(last));
+        }
+
+        dataDispatch({
+          type: 'FETCH_SUCCESS',
+          payload: { currencies: dataState.currencies, priceChanges },
+        });
+      } catch (err) {
+        if (!cancelled) {
+          dataDispatch({
+            type: 'FETCH_ERROR',
+            payload: err instanceof Error ? err.message : 'Unknown error',
+          });
+        }
+      }
+    };
+
+    loadRate();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [converterState.from, converterState.to, dataState.currencies]);
 
   const setFrom = (code: string) => converterDispatch({ type: 'SET_FROM', code });
   const setTo = (code: string) => converterDispatch({ type: 'SET_TO', code });
   const setAmount = (value: string) => converterDispatch({ type: 'SET_AMOUNT', value });
   const swap = () => converterDispatch({ type: 'SWAP' });
 
-  // Вычисление курса из загруженного плоского массива
+  // Вычисление курса: теперь берём цену из первого (и единственного) элемента
   const rate = useMemo(() => {
-    if (dataState.loading || dataState.error) {
+    if (dataState.loading || dataState.error || dataState.priceChanges.length === 0) {
       return 0;
     }
-    const entry = dataState.priceChanges.find(
-      pc =>
-        pc.purchasedCurrencyCode === converterState.from &&
-        pc.paymentCurrencyCode === converterState.to
-    );
-    return entry?.price ?? 0;
-  }, [dataState.priceChanges, dataState.loading, dataState.error, converterState.from, converterState.to]);
+    return dataState.priceChanges[0].price;
+  }, [dataState.loading, dataState.error, dataState.priceChanges]);
 
   const result = useMemo(() => {
     const parsed = parseFloat(converterState.amountInput);
@@ -139,7 +148,6 @@ export function useConverter() {
   }, [converterState.amountInput, rate]);
 
   return {
-
     from: converterState.from,
     to: converterState.to,
     amountInput: converterState.amountInput,
@@ -149,8 +157,6 @@ export function useConverter() {
     setTo,
     setAmount,
     swap,
-
-    // UI Data
     currencies: dataState.currencies,
     priceChanges: dataState.priceChanges,
     loading: dataState.loading,

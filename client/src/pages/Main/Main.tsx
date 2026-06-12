@@ -18,7 +18,9 @@ export const Main = () => {
   const dateTime = rateEntry ? new Date(rateEntry.dateTime).toUTCString() : 'Date is not specified';
 
   if (loading) {
-    return <div className={styles.main}>Loading data...</div>;
+    return (
+      <div className={styles.main}>Loading data...</div>
+    );
   }
 
   if (error) {
