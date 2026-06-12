@@ -51,21 +51,22 @@ export function useConverter() {
   const [converterState, converterDispatch] = useReducer(converterReducer, initialConverterState);
   const [dataState, dataDispatch] = useReducer(dataReducer, initialDataState);
 
-  // 1. Загрузка списка валют
+  // Загрузка списка валют
   useEffect(() => {
     let cancelled = false;
-
     const loadCurrencies = async () => {
       dataDispatch({ type: 'FETCH_START' });
       try {
+
         const currenciesDto = await fetchCurrencies();
-        if (cancelled) return;
+        if (cancelled) {
+          return;
+        }
 
         const currencies: Currency[] = currenciesDto.map(mapCurrency);
-
         dataDispatch({
           type: 'FETCH_SUCCESS',
-          payload: { currencies, priceChanges: [] }, // курсы пока пустые
+          payload: { currencies, priceChanges: [] },
         });
       } catch (err) {
         if (!cancelled) {
@@ -76,26 +77,20 @@ export function useConverter() {
         }
       }
     };
-
     loadCurrencies();
-
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, []);
 
-  // 2. Загрузка курса для выбранной пары валют
+  // Загрузка курса для текущей пары валют
   useEffect(() => {
-    // Ждём, пока загрузятся валюты, чтобы не делать запрос без кодов
     if (dataState.currencies.length === 0) {
       return;
     }
-
+    
     let cancelled = false;
     const loadRate = async () => {
-      dataDispatch({ type: 'FETCH_START' });
+      dataDispatch({ type: 'FETCH_RATE_START' });
       try {
-
         const history = await fetchPriceChanges(converterState.from, converterState.to);
         if (cancelled) {
           return;
@@ -108,24 +103,21 @@ export function useConverter() {
         }
 
         dataDispatch({
-          type: 'FETCH_SUCCESS',
-          payload: { currencies: dataState.currencies, priceChanges },
+          type: 'FETCH_RATE_SUCCESS',
+          payload: { priceChanges },
         });
+
       } catch (err) {
         if (!cancelled) {
           dataDispatch({
-            type: 'FETCH_ERROR',
+            type: 'FETCH_RATE_ERROR',
             payload: err instanceof Error ? err.message : 'Unknown error',
           });
         }
       }
     };
-
     loadRate();
-
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, [converterState.from, converterState.to, dataState.currencies]);
 
   const setFrom = (code: string) => converterDispatch({ type: 'SET_FROM', code });
@@ -133,13 +125,11 @@ export function useConverter() {
   const setAmount = (value: string) => converterDispatch({ type: 'SET_AMOUNT', value });
   const swap = () => converterDispatch({ type: 'SWAP' });
 
-  // Вычисление курса: теперь берём цену из первого (и единственного) элемента
+  // Курс из единственного элемента priceChanges
   const rate = useMemo(() => {
-    if (dataState.loading || dataState.error || dataState.priceChanges.length === 0) {
-      return 0;
-    }
+    if (dataState.priceChanges.length === 0) return 0;
     return dataState.priceChanges[0].price;
-  }, [dataState.loading, dataState.error, dataState.priceChanges]);
+  }, [dataState.priceChanges]);
 
   const result = useMemo(() => {
     const parsed = parseFloat(converterState.amountInput);
@@ -157,9 +147,11 @@ export function useConverter() {
     setTo,
     setAmount,
     swap,
+    // данные для UI
     currencies: dataState.currencies,
     priceChanges: dataState.priceChanges,
     loading: dataState.loading,
+    rateLoading: dataState.rateLoading,
     error: dataState.error,
   };
 }
