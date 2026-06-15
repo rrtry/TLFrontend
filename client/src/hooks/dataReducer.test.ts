@@ -1,92 +1,58 @@
 import { dataReducer, initialDataState } from './dataReducer';
+import type { DataState } from './dataReducer';
+
+type TestData = string[];
 
 describe('dataReducer', () => {
+  const initial: DataState<TestData> = initialDataState<TestData>([]);
+
   it('should set loading on FETCH_START', () => {
-    const state = dataReducer(initialDataState, { type: 'FETCH_START' });
+    const state = dataReducer<TestData>(initial, { type: 'FETCH_START' });
     expect(state.loading).toBe(true);
     expect(state.error).toBeNull();
+    expect(state.data).toEqual([]);
   });
 
   it('should store data on FETCH_SUCCESS', () => {
-
-    const currencies = [{ code: 'CAD', name: 'Canadian dollar', description: '', symbol: '$' }];
-    const priceChanges = [{ purchasedCurrencyCode: 'CAD', paymentCurrencyCode: 'PLN', price: 2.95, dateTime: '' }];
-    const state = dataReducer(initialDataState, {
+    const payload: TestData = ['a', 'b'];
+    const state = dataReducer<TestData>(initial, {
       type: 'FETCH_SUCCESS',
-      payload: { currencies, priceChanges },
+      payload,
     });
-
-    expect(state.currencies).toEqual(currencies);
-    expect(state.priceChanges).toEqual(priceChanges);
+    expect(state.data).toEqual(payload);
     expect(state.loading).toBe(false);
     expect(state.error).toBeNull();
-
   });
 
   it('should set error on FETCH_ERROR', () => {
-
-    const state = dataReducer(initialDataState, {
+    const state = dataReducer<TestData>(initial, {
       type: 'FETCH_ERROR',
       payload: 'Network error',
     });
-
     expect(state.error).toBe('Network error');
     expect(state.loading).toBe(false);
   });
-  
-  it('should set rateLoading on FETCH_RATE_START and clear rateError', () => {
 
-    const prevState = {
-      ...initialDataState,
-      rateError: 'Previous rate error',
-    };
-
-    const state = dataReducer(prevState, { type: 'FETCH_RATE_START' });
-    expect(state.rateLoading).toBe(true);
-    expect(state.rateError).toBeNull();
-
-    // проверяем, что другие поля не изменились
-    expect(state.loading).toBe(prevState.loading);
-    expect(state.error).toBe(prevState.error);
+  it('should preserve existing data on FETCH_START', () => {
+    const withData = dataReducer<TestData>(initial, {
+      type: 'FETCH_SUCCESS',
+      payload: ['x'],
+    });
+    const state = dataReducer<TestData>(withData, { type: 'FETCH_START' });
+    expect(state.data).toEqual(['x']);
+    expect(state.loading).toBe(true);
   });
 
-  it('should update priceChanges and clear rateLoading/rateError on FETCH_RATE_SUCCESS', () => {
-
-    const priceChanges = [
-      { purchasedCurrencyCode: 'AUD', paymentCurrencyCode: 'JPY', price: 95.77, dateTime: '2026-01-02T00:00:00Z' },
-    ];
-
-    const prevState = {
-      ...initialDataState,
-      rateLoading: true,
-      rateError: 'Previous rate error',
-    };
-
-    const state = dataReducer(prevState, {
-      type: 'FETCH_RATE_SUCCESS',
-      payload: { priceChanges },
+  it('should clear error on FETCH_SUCCESS', () => {
+    const errored = dataReducer<TestData>(initial, {
+      type: 'FETCH_ERROR',
+      payload: 'fail',
     });
-
-    expect(state.priceChanges).toEqual(priceChanges);
-    expect(state.rateLoading).toBe(false);
-    expect(state.rateError).toBeNull();
-  });
-
-  it('should set rateError and clear rateLoading on FETCH_RATE_ERROR', () => {
-    
-    const prevState = {
-      ...initialDataState,
-      rateLoading: true,
-    };
-
-    const state = dataReducer(prevState, {
-      type: 'FETCH_RATE_ERROR',
-      payload: 'Rate fetch failed',
+    const state = dataReducer<TestData>(errored, {
+      type: 'FETCH_SUCCESS',
+      payload: ['ok'],
     });
-
-    expect(state.rateError).toBe('Rate fetch failed');
-    expect(state.rateLoading).toBe(false);
-    // проверяем, что общая ошибка не затронута
-    expect(state.error).toBe(prevState.error);
+    expect(state.error).toBeNull();
+    expect(state.data).toEqual(['ok']);
   });
 });

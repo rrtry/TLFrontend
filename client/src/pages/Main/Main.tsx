@@ -15,7 +15,6 @@ export const Main = () => {
 
   const fromCurrency = currencies.find(c => c.code === from);
   const toCurrency = currencies.find(c => c.code === to);
-
   const rateEntry = priceChanges.find(pc => pc.purchasedCurrencyCode === from && pc.paymentCurrencyCode === to);
   const dateTime = rateEntry
     ? new Date(rateEntry.dateTime).toUTCString()
