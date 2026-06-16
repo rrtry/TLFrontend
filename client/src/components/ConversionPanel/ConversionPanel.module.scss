@@ -1,7 +1,7 @@
 .panel {
   margin-block-end: 2rem;
   padding: 1rem;
-  background: #f9f9f9;
+  background: transparent;
   border-radius: 12px;
 }
 
@@ -10,7 +10,6 @@
   flex-direction: column;
   grid-template-columns: 1fr 1fr;
   gap: 0.5rem;
-
   margin-block-end: 1rem;
 }
 
@@ -20,6 +19,7 @@
 }
 
 .swap-button {
+  
   inline-size: fit-content;
   margin: 0.5rem auto;
   padding: 0.5rem 1rem; 

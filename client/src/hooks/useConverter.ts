@@ -1,4 +1,4 @@
-import { useReducer, useMemo, useEffect } from 'react';
+import { useReducer, useMemo, useEffect, useState } from 'react';
 import { fetchCurrencies } from '../api/currencyApi';
 import { fetchPriceChanges } from '../api/priceApi';
 import { mapCurrency } from '../mappers/currencyMapper';
@@ -59,6 +59,7 @@ export function useConverter() {
 
   const [currenciesState, currenciesDispatch] = useReducer(dataReducer, initialDataState<Currency[]>([]));
   const [priceChangesState, priceChangesDispatch] = useReducer(dataReducer, initialDataState<PriceChange[]>([]));
+  const [period, setPeriod] = useState(1);
 
   useEffect(() => {
 
@@ -97,45 +98,67 @@ export function useConverter() {
       return;
     }
 
-    let cancelled = false;
-    const loadRate = async () => {
+    let aborted = false;
+    let controller: AbortController | null = null;
+    let intervalId: ReturnType<typeof setInterval> | null = null;
+
+    const loadHistory = async () => {
+      // Отменяем предыдущий незавершённый запрос
+      if (controller) {
+        controller.abort();
+      }
+
+      controller = new AbortController();
+      const signal = controller.signal;
+
       priceChangesDispatch({ type: 'FETCH_START' });
+
       try {
 
-        const history = await fetchPriceChanges(
+        const now = new Date();
+        const fromDateTime = new Date(now.getTime() - period * 60 * 1000).toISOString();
+        const toDateTime = now.toISOString();
+
+        const dtos = await fetchPriceChanges(
           converterState.from,
-          converterState.to
+          converterState.to,
+          fromDateTime,
+          toDateTime,
+          signal
         );
 
-        if (cancelled) {
+        if (aborted) {
           return;
         }
 
-        const priceChanges: PriceChange[] = [];
-        if (history.length > 0) {
-          const last = history[history.length - 1];
-          priceChanges.push(mapPriceChange(last));
+        const mapped = dtos.map(mapPriceChange);
+        priceChangesDispatch({ type: 'FETCH_SUCCESS', payload: mapped });
+
+      } catch (err) {
+
+        if (aborted || (err instanceof DOMException && err.name === 'AbortError')) {
+          return;
         }
 
         priceChangesDispatch({
-          type: 'FETCH_SUCCESS',
-          payload: priceChanges,
+          type: 'FETCH_ERROR',
+          payload: err instanceof Error ? err.message : 'Unknown error',
         });
-
-      } catch (err) {
-        if (!cancelled) {
-          priceChangesDispatch({
-            type: 'FETCH_ERROR',
-            payload: err instanceof Error ? err.message : 'Unknown error',
-          });
-        }
       }
     };
 
-    loadRate();
-    return () => { cancelled = true; };
+    // Первоначальная загрузка
+    loadHistory();
 
-  }, [converterState.from, converterState.to, currenciesState.data]);
+    // Автообновление каждые 10 секунд
+    intervalId = setInterval(loadHistory, 10_000);
+
+    return () => {
+      aborted = true;
+      if (controller) controller.abort();
+      if (intervalId) clearInterval(intervalId);
+    };
+  }, [converterState.from, converterState.to, currenciesState.data, period]);
 
   const setFrom = (code: string) => converterDispatch({ type: 'SET_FROM', code });
   const setTo = (code: string) => converterDispatch({ type: 'SET_TO', code });
@@ -173,5 +196,7 @@ export function useConverter() {
     rateLoading: priceChangesState.loading,
     error: currenciesState.error,
     rateError: priceChangesState.error,
+    period,
+    setPeriod
   };
 }

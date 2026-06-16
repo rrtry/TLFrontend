@@ -4,6 +4,8 @@ import { ExchangeRate } from '../../components/ExchangeRate/ExchangeRate';
 import { ConversionPanel } from '../../components/ConversionPanel/ConversionPanel';
 import { MoreAbout } from '../../components/MoreAbout/MoreAbout';
 import { Toast } from '../../components/Toast/Toast';
+import { RateChart } from '../../components/RateChart/RateChart';
+import { PeriodSwitch } from '../../components/RateChart/PeriodSwitch';
 import styles from './Main.module.scss';
 
 export const Main = () => {
@@ -11,6 +13,7 @@ export const Main = () => {
     from, to, amountInput, result, rate,
     setFrom, setTo, setAmount, swap,
     currencies, priceChanges, loading, error, rateLoading, rateError,
+    period, setPeriod,
   } = useConverter();
 
   const fromCurrency = currencies.find(c => c.code === from);
@@ -26,7 +29,7 @@ export const Main = () => {
     if (rateError) {
       setToastMessage(rateError);
     }
-  }, [rateError, rateLoading]);
+  }, [rateError]);
 
   const dismissToast = () => setToastMessage(null);
 
@@ -39,9 +42,7 @@ export const Main = () => {
   if (currencies.length === 0 && error) {
     return (
       <div className={styles.main}>
-        <div>
-          Server error: {error}
-        </div>
+        <div>Server error: {error}</div>
       </div>
     );
   }
@@ -54,34 +55,50 @@ export const Main = () => {
 
   return (
     <div className={styles.main}>
+        <div className={styles.card}>
 
-      {toastMessage && <Toast message={toastMessage} onDismiss={dismissToast} />}
+          {toastMessage && <Toast message={toastMessage} onDismiss={dismissToast} />}
 
-      <ExchangeRate
-        fromAmount={1}
-        fromCurrency={from}
-        toAmount={rate}
-        toCurrency={to}
-        date={dateTime}
-      />
+          <ExchangeRate
+            fromAmount={1}
+            fromCurrency={from}
+            toAmount={rate}
+            toCurrency={to}
+            date={dateTime}
+          />
 
-      <ConversionPanel
-        from={from}
-        to={to}
-        amountInput={amountInput}
-        result={result}
-        currencies={currencies}
-        onFromChange={setFrom}
-        onToChange={setTo}
-        onAmountChange={setAmount}
-        onSwap={swap}
-      />
+          <div className={styles.columns}>
+            <div className={styles.left}>
+              <ConversionPanel
+                from={from}
+                to={to}
+                amountInput={amountInput}
+                result={result}
+                currencies={currencies}
+                onFromChange={setFrom}
+                onToChange={setTo}
+                onAmountChange={setAmount}
+                onSwap={swap}
+              />
+            </div>
+            
+            <div className={styles.right}>
+              <PeriodSwitch period={period} onChange={setPeriod} />
+              <RateChart
+                data={priceChanges}
+                loading={rateLoading}
+                error={rateError}
+              />
+            </div>
+          </div>
 
-      <MoreAbout
-        key={moreAboutKey}
-        fromCurrency={fromCurrency}
-        toCurrency={toCurrency}
-      />
+          <MoreAbout
+            key={moreAboutKey}
+            fromCurrency={fromCurrency}
+            toCurrency={toCurrency}
+          />
+
+      </div>
     </div>
   );
 };

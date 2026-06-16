@@ -4,6 +4,13 @@ import { Main } from '../pages/Main/Main';
 import { useConverter } from '../hooks/useConverter';
 
 vi.mock('../hooks/useConverter');
+vi.mock('recharts', async () => {
+  const actual = await vi.importActual<typeof import('recharts')>('recharts');
+  return {
+    ...actual,
+    ResponsiveContainer: ({ children }: any) => <div>{children}</div>,
+  };
+});
 
 const baseCurrencies = [
   { code: 'CAD', name: 'Canadian dollar', description: 'CAD desc', symbol: '$' },
@@ -36,6 +43,8 @@ const defaultHookReturn = {
   setTo: vi.fn(),
   setAmount: vi.fn(),
   swap: vi.fn(),
+  period: 1,
+  setPeriod: vi.fn()
 };
 
 describe('Конвертер (Main с замоканным useConverter)', () => {
@@ -218,5 +227,64 @@ describe('Конвертер (Main с замоканным useConverter)', () =>
     fireEvent.click(swapButton);
 
     expect(swap).toHaveBeenCalledTimes(1);
+  });
+
+  // График
+  it('отображает переключатель периода', () => {
+    render(<Main />);
+    expect(screen.getByTestId('period-switch')).toBeInTheDocument();
+    expect(screen.getByTestId('period-1')).toHaveClass(/active/);
+  });
+
+  it('вызывает setPeriod при клике на период', () => {
+    const setPeriod = vi.fn();
+    vi.mocked(useConverter).mockReturnValue({
+      ...defaultHookReturn,
+      setPeriod,
+    });
+    render(<Main />);
+    fireEvent.click(screen.getByTestId('period-3'));
+    expect(setPeriod).toHaveBeenCalledWith(3);
+  });
+
+  it('отображает график с данными', () => {
+    vi.mocked(useConverter).mockReturnValue({
+      ...defaultHookReturn,
+      priceChanges: [
+        { purchasedCurrencyCode: 'CAD', paymentCurrencyCode: 'PLN', price: 2.95, dateTime: '2026-01-01T00:00:00Z' },
+        { purchasedCurrencyCode: 'CAD', paymentCurrencyCode: 'PLN', price: 2.96, dateTime: '2026-01-01T00:00:10Z' },
+      ],
+    });
+    render(<Main />);
+    expect(screen.getByTestId('chart-container')).toBeInTheDocument();
+  });
+
+  it('отображает состояние загрузки графика', () => {
+    vi.mocked(useConverter).mockReturnValue({
+      ...defaultHookReturn,
+      priceChanges: [],
+      rateLoading: true,
+    });
+    render(<Main />);
+    expect(screen.getByTestId('chart-loading')).toBeInTheDocument();
+  });
+
+  it('отображает ошибку графика при первой загрузке', () => {
+    vi.mocked(useConverter).mockReturnValue({
+      ...defaultHookReturn,
+      priceChanges: [],
+      rateError: 'Network error',
+    });
+    render(<Main />);
+    expect(screen.getByTestId('chart-error')).toBeInTheDocument();
+  });
+
+  it('отображает сообщение о пустом графике', () => {
+    vi.mocked(useConverter).mockReturnValue({
+      ...defaultHookReturn,
+      priceChanges: [],
+    });
+    render(<Main />);
+    expect(screen.getByTestId('chart-empty')).toBeInTheDocument();
   });
 });
