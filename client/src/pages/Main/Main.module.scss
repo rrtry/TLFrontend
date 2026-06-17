@@ -1,5 +1,18 @@
-.main {
-  max-inline-size: 800px;
-  margin: 0 auto;
+.card {
+  width: 800px;
+  border-radius: 10px;
+  align-self: center;
+  background-color: white;
+  margin: auto;
   padding: 2rem 1rem;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+.main {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(173, 216, 230, 0.192);
 }

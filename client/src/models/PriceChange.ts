@@ -1,4 +1,4 @@
-export interface PriceChange {
+export type PriceChange = {
   purchasedCurrencyCode: string;
   paymentCurrencyCode: string;
   price: number;

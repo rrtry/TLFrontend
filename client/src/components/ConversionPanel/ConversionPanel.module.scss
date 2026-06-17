@@ -1,7 +1,7 @@
 .panel {
   margin-block-end: 2rem;
   padding: 1rem;
-  background: #f9f9f9;
+  background: transparent;
   border-radius: 12px;
 }
 
@@ -10,7 +10,6 @@
   flex-direction: column;
   grid-template-columns: 1fr 1fr;
   gap: 0.5rem;
-
   margin-block-end: 1rem;
 }
 
@@ -23,16 +22,12 @@
   inline-size: fit-content;
   margin: 0.5rem auto;
   padding: 0.5rem 1rem; 
-
   background: #07f;
   border: none;
   border-radius: 20px;
-
   color: white;
   font-size: 1rem;
-
   transition: background 0.2s;
-
   cursor: pointer;
 
   &:hover {
