@@ -1,0 +1,30 @@
+.switch {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+}
+
+.button {
+  padding: 0.4rem 0.8rem;
+  border: 1px solid #ccc;
+  background: #f0f0f0;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: 0.2s;
+
+  &:hover {
+    background: #e0e0e0;
+  }
+}
+
+.active {
+
+  background: #07f;
+  color: white;
+  border-color: #07f;
+
+  &:hover {
+    background: #005fcc;
+  }
+}
