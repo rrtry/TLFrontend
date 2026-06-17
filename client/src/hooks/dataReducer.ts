@@ -1,4 +1,4 @@
-export interface DataState<T> {
+export type DataState<T> = {
   data: T;
   loading: boolean;
   error: string | null;

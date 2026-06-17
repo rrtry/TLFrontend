@@ -5,7 +5,7 @@ import { dataReducer, initialDataState } from './dataReducer';
 import { usePriceChanges } from './usePriceChanges';
 import type { Currency } from '../models/Currency';
 
-interface ConverterState {
+type ConverterState = {
   from: string;
   to: string;
   amountInput: string;
